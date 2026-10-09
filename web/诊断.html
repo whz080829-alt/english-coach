@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>诊断 · 英语提分教练</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 28px 20px 60px; background: #0e1116; color: #e6ecf3;
+    font: 15px/1.7 -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif; }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  h2 { font-size: 16px; margin: 26px 0 10px; }
+  p, li { color: #b9c4d2; }
+  a { color: #4c8dff; }
+  code { background: #232a34; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
+  #verdict { margin: 18px 0; padding: 18px 22px; border-radius: 14px; background: #161b22;
+    border: 1px solid #2c3542; font-size: 16px; }
+  #verdict.ok { border-color: #34d399; }
+  #verdict.bad { border-color: #f87171; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 8px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #232a34; vertical-align: top; }
+  th { color: #8d9aab; font-weight: 600; font-size: 12.5px; }
+  .st { font-weight: 700; white-space: nowrap; }
+  .ok { color: #34d399; }
+  .fail { color: #f87171; }
+  .wait { color: #8d9aab; }
+  .btn { display: inline-block; margin: 8px 8px 0 0; padding: 9px 16px; border-radius: 10px;
+    background: #232a34; border: 1px solid #2c3542; color: #e6ecf3; cursor: pointer;
+    font-size: 14px; font-family: inherit; text-decoration: none; }
+  .btn.primary { background: #4c8dff; border-color: #4c8dff; color: #fff; font-weight: 600; }
+  pre { background: #161b22; border: 1px solid #232a34; border-radius: 10px; padding: 14px;
+    overflow: auto; font-size: 12.5px; color: #b9c4d2; white-space: pre-wrap; }
+  .diag-qr { margin-top: 10px; background: #fff; padding: 8px; border-radius: 10px;
+    width: 168px; height: 168px; }
+  .diag-qr svg { width: 100%; height: 100%; display: block; }
+  td code { word-break: break-all; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>英语提分教练 · 环境自检</h1>
+  <p>这一页不依赖任何外部文件，专门用来查出"打开是黑屏"到底卡在哪一步。</p>
+  <div id="verdict">检测中…</div>
+  <a class="btn primary" href="index.html">打开 index.html →</a>
+  <button class="btn" id="copy">复制诊断报告</button>
+
+  <h2>逐项检测结果</h2>
+  <table>
+    <thead><tr><th style="width:26%">检测项</th><th style="width:10%">结果</th><th>说明</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <h2>环境信息</h2>
+  <pre id="env"></pre>
+
+  <h2>如果检测出问题</h2>
+  <ul>
+    <li><b>脚本加载失败</b>：说明页面所在位置找不到 <code>assets/js/</code>。请确认 <code>index.html</code> 和 <code>assets</code> 文件夹在同一层；如果你是在聊天窗口或编辑器里"预览"打开的，请改为在文件管理器里双击 <code>index.html</code>。</li>
+    <li><b>本地存储不可用</b>：学习进度无法保存。请用 Chrome/Edge 打开，并关掉"无痕/隐私模式"；或改用 <code>启动.cmd</code> 的本地服务器方式。</li>
+    <li><b>语音不可用</b>：只有听力模块受影响，其余模块可正常使用。Windows 可在"设置 → 时间和语言 → 语言"里为英语安装语音包。</li>
+  </ul>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var ASSETS = [
+    'assets/js/core/parse.js', 'assets/js/core/store.js', 'assets/js/core/tts.js',
+    'assets/js/core/api.js', 'assets/js/core/cloud.js', 'assets/js/core/install.js',
+    'assets/js/data/vocab.basic.js', 'assets/js/data/vocab.cet.js', 'assets/js/data/vocab.js',
+    'assets/js/data/grammar.js', 'assets/js/data/listening.js',
+    'assets/js/data/reading.js', 'assets/js/data/writing.js',
+    'assets/js/core/engine.js', 'assets/js/core/writegrade.js',
+    'assets/js/ui/ui.js', 'assets/js/ui/view-onboarding.js', 'assets/js/ui/view-plan.js',
+    'assets/js/ui/view-placement.js', 'assets/js/ui/view-vocab.js',
+    'assets/js/ui/view-grammar.js', 'assets/js/ui/view-listening.js',
+    'assets/js/ui/view-reading.js', 'assets/js/ui/view-writing.js', 'assets/js/ui/view-stats.js',
+    'assets/js/ui/view-settings.js', 'assets/js/ui/view-summary.js',
+    'assets/js/ui/view-account.js', 'assets/js/ui/view-social.js', 'assets/js/app.js'
+  ];
+  var results = [];
+  var rows = document.getElementById('rows');
+
+  function addRow(name, status, note) {
+    var tr = document.createElement('tr');
+    var cls = status === 'ok' ? 'ok' : status === 'fail' ? 'fail' : 'wait';
+    var txt = status === 'ok' ? '✅ 正常' : status === 'fail' ? '❌ 失败' : '… 检测中';
+    tr.innerHTML = '<td>' + name + '</td><td class="st ' + cls + '">' + txt + '</td><td class="hint">' + note + '</td>';
+    rows.appendChild(tr);
+    return tr;
+  }
+
+  function setRow(tr, status, note) {
+    var cls = status === 'ok' ? 'ok' : status === 'fail' ? 'fail' : 'wait';
+    var txt = status === 'ok' ? '✅ 正常' : status === 'fail' ? '❌ 失败' : '… 检测中';
+    tr.cells[1].className = 'st ' + cls;
+    tr.cells[1].textContent = txt;
+    if (note !== undefined) tr.cells[2].innerHTML = note;
+  }
+
+  var report = [];
+  function log(line) { report.push(line); }
+
+  /* 1. 基本环境 */
+  var envRow = addRow('环境与协议', 'wait', '');
+  var isFile = location.protocol === 'file:';
+  setRow(envRow, 'ok', '协议 <code>' + location.protocol + '</code>' + (isFile ? '（本地文件方式，可用）' : ''));
+  log('协议: ' + location.protocol);
+  log('地址: ' + location.href);
+
+  /* 2. 本地存储 */
+  var stRow = addRow('本地存储（进度保存）', 'wait', '');
+  var storageOK = false, storageMsg = '';
+  try {
+    var k = '__ec_diag__';
+    window.localStorage.setItem(k, '1');
+    storageOK = window.localStorage.getItem(k) === '1';
+    window.localStorage.removeItem(k);
+  } catch (e) {
+    storageMsg = e && e.name === 'SecurityError'
+      ? '浏览器禁止此页面使用本地存储（常见于隐私模式、或沙箱预览窗口）'
+      : ('异常：' + (e && e.message));
+  }
+  setRow(stRow, storageOK ? 'ok' : 'fail', storageOK ? '读写正常，学习进度可以保存' : storageMsg);
+  log('localStorage: ' + (storageOK ? 'OK' : 'FAIL ' + storageMsg));
+
+  /* 3. 语音合成 */
+  var ttsRow = addRow('浏览器语音合成（听力）', 'wait', '');
+  var hasTTS = typeof window.speechSynthesis !== 'undefined' && typeof window.SpeechSynthesisUtterance !== 'undefined';
+  var voiceCount = 0;
+  function countVoices() {
+    var vs = (window.speechSynthesis && speechSynthesis.getVoices()) || [];
+    voiceCount = vs.filter(function (v) { return /^en/i.test(v.lang || ''); }).length;
+    setRow(ttsRow, hasTTS ? 'ok' : 'fail',
+      hasTTS ? ('可用，检测到 <b>' + voiceCount + '</b> 个英语音色' + (voiceCount ? '' : '（音色列表可能稍后才加载出来）')) 
+             : '当前浏览器不支持语音合成，听力模块不可用，其余模块正常');
+    log('speechSynthesis: ' + (hasTTS ? 'OK, english voices=' + voiceCount : 'UNSUPPORTED'));
+    if (ttsRow.cells[1].textContent.indexOf('检测中') >= 0) setRow(ttsRow, hasTTS ? 'ok' : 'fail', '');
+  }
+  if (hasTTS) {
+    countVoices();
+    if (typeof speechSynthesis.addEventListener === 'function') {
+      speechSynthesis.addEventListener('voiceschanged', countVoices);
+    } else {
+      speechSynthesis.onvoiceschanged = countVoices;
+    }
+    setTimeout(countVoices, 1200);
+  } else {
+    countVoices();
+  }
+
+  /* 4. CSS */
+  var cssRow = addRow('样式表 assets/css/app.css', 'wait', '');
+  var link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'assets/css/app.css';
+  link.onload = function () { setRow(cssRow, 'ok', '加载成功'); log('app.css: OK'); done('css'); };
+  link.onerror = function () { setRow(cssRow, 'fail', '加载失败：路径不对或文件缺失'); log('app.css: FAIL'); done('css'); };
+  document.head.appendChild(link);
+
+  /* 5. 脚本逐个探测（动态加载，只看 onload / onerror） */
+  var scriptRow = addRow('应用脚本（共 ' + ASSETS.length + ' 个）', 'wait', '');
+  var failed = [], loaded = 0, finished = 0;
+
+  function loadOne(src, cb) {
+    var s = document.createElement('script');
+    s.src = src;
+    s.async = false;
+    var settled = false;
+    s.onload = function () { if (!settled) { settled = true; cb(true); } };
+    s.onerror = function () { if (!settled) { settled = true; cb(false); } };
+    document.body.appendChild(s);
+    setTimeout(function () { if (!settled) { settled = true; cb(false); } }, 5000);
+  }
+
+  function done(which) {
+    finished++;
+    if (finished < 2) return;
+    setRow(scriptRow, failed.length ? 'fail' : 'ok',
+      failed.length ? ('有 ' + failed.length + ' 个脚本加载失败：<code>' + failed.slice(0, 3).join('</code> <code>') + '</code>' +
+        (failed.length > 3 ? ' 等' : '') + '<br>请确认 assets 文件夹与 index.html 在同一层，并且不是在被拦截脚本的预览窗口里打开。')
+        : ('全部 ' + ASSETS.length + ' 个脚本加载成功'));
+    log('scripts: ' + loaded + '/' + ASSETS.length + ' OK' + (failed.length ? (', failed: ' + failed.join(', ')) : ''));
+    verdict();
+  }
+
+  (function next(i) {
+    if (i >= ASSETS.length) { done('scripts'); return; }
+    loadOne(ASSETS[i], function (ok) {
+      if (ok) loaded++; else failed.push(ASSETS[i]);
+      next(i + 1);
+    });
+  })(0);
+
+  /* 6. 手机 / PWA 自检 —— 在手机上打开这一页，就能看清能不能装成 App、为什么装不上 */
+  var pwaRow = addRow('PWA 清单（manifest）', 'wait', '');
+  var swRow = addRow('离线缓存（Service Worker）', 'wait', '');
+  var modeRow = addRow('当前运行方式', 'wait', '');
+  var lanBox = addRow('手机访问入口', 'wait', '正在检测…');
+
+  var secure = !!window.isSecureContext;
+  var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+    window.navigator.standalone === true;
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isAndroid = /Android/.test(navigator.userAgent);
+
+  setRow(modeRow, standalone ? 'ok' : 'wait',
+    standalone
+      ? '<b>已经作为独立应用运行</b>（从桌面图标打开，没有浏览器地址栏）✓'
+      : '当前在<b>浏览器标签页</b>里运行。想装成 App：' +
+        (isIOS ? 'Safari 底部「分享」⬆️ →「添加到主屏幕」'
+          : isAndroid ? '浏览器菜单（⋮）→「安装应用 / 添加到主屏幕」'
+            : 'Chrome / Edge 地址栏右侧的 ⊕ 图标，或菜单 →「安装此应用」'));
+  log('standalone: ' + standalone + ', secureContext: ' + secure + ', ios: ' + isIOS + ', android: ' + isAndroid);
+
+  /* manifest 与图标 */
+  fetch('manifest.webmanifest').then(function (r) {
+    return r.json().then(function (m) {
+      var icons = m.icons || [];
+      var names = icons.map(function (i) { return i.sizes; }).join(' ');
+      setRow(pwaRow, r.ok && icons.length >= 2 ? 'ok' : 'fail',
+        '名称「' + (m.short_name || m.name) + '」 · 启动方式 ' + m.display +
+        ' · 图标 ' + icons.length + ' 个（' + names + '）');
+      log('manifest: ' + (m.name || '') + ', icons=' + icons.length);
+      // 抽验一张图标是否真的能取到
+      if (icons.length) {
+        fetch(icons[0].src).then(function (ir) {
+          if (!ir.ok) setRow(pwaRow, 'fail', '清单里的图标取不到：' + icons[0].src);
+        }).catch(function () { });
+      }
+    });
+  }).catch(function (e) {
+    setRow(pwaRow, 'fail', '读不到 manifest.webmanifest（' + e.message +
+      '）<br>请确认是通过 http 服务打开的，而不是直接用 file:// 打开。');
+  });
+
+  /* Service Worker（诊断页必须自己足够健壮：它是"出问题时"才打开的页面，
+     所以这里对 API 缺失、对象为空、调用抛错都做了兜底，绝不让整段自检中断） */
+  try {
+    var swApi = navigator.serviceWorker;
+    if (!swApi || typeof swApi.getRegistration !== 'function') {
+      setRow(swRow, 'fail', '当前浏览器不支持 Service Worker（离线缓存不可用，其它功能正常）');
+      log('sw: unsupported');
+    } else if (!secure) {
+      setRow(swRow, 'wait',
+        '当前地址不是安全上下文（<code>' + location.host + '</code>），浏览器<b>只在 https 或 localhost 下</b>启用离线缓存。' +
+        '<br>局域网 http 访问时看不到「一键安装」按钮也属于同一原因 —— 用上面的「添加到主屏幕」即可得到桌面图标。');
+      log('sw: skipped, insecure context');
+    } else {
+      swApi.getRegistration().then(function (reg) {
+        if (reg && (reg.active || reg.installing || reg.waiting)) {
+          var st = reg.active ? '已激活' : (reg.installing ? '安装中' : '等待激活');
+          setRow(swRow, 'ok', '已注册 · ' + st + ' · 缓存后断网也能背单词');
+          log('sw: registered (' + st + ')');
+        } else {
+          setRow(swRow, 'wait', '尚未注册（首次打开会自动注册；刷新一次即可）');
+          log('sw: not registered');
+        }
+      }).catch(function (e) {
+        setRow(swRow, 'wait', '查询离线缓存状态失败：' + (e && e.message) +
+          '<br>这不影响学习功能，刷新页面可重试。');
+      });
+    }
+  } catch (e) {
+    setRow(swRow, 'wait', '检查离线缓存时出错：' + (e && e.message) + '（不影响学习功能）');
+    log('sw: exception ' + (e && e.message));
+  }
+
+  /* 局域网入口 + 二维码（后端在跑时才有） */
+  fetch('api/share').then(function (r) { return r.json(); }).then(function (d) {
+    var url = (d.urls && d.urls[0]) || '';
+    if (!url) { setRow(lanBox, 'wait', '后端没有返回局域网地址。'); return; }
+    setRow(lanBox, 'ok',
+      '手机连同一个 Wi-Fi，扫码或打开：<br><code>' + url + '</code>' +
+      (d.qr ? '<div class="diag-qr">' + d.qr + '</div>' : ''));
+    log('lan url: ' + url);
+  }).catch(function () {
+    setRow(lanBox, 'wait',
+      '没有连上后端（当前是本机模式）。启动 <code>启动服务器.cmd</code> 后刷新本页，' +
+      '这里会显示手机扫码入口。');
+  });
+
+  /* 结论 */
+  var verdictShown = false;
+  function verdict() {
+    if (verdictShown) return;
+    verdictShown = true;
+    var box = document.getElementById('verdict');
+    var good = failed.length === 0 && storageOK;
+    box.className = good ? 'ok' : 'bad';
+    if (failed.length) {
+      box.innerHTML = '❌ <b>脚本没有加载成功</b>，所以页面是空的（"黑屏"）。<br>' +
+        '最常见原因：在聊天窗口/编辑器里点了"预览"，或者只把 index.html 单独拷了出来。<br>' +
+        '解决：在文件管理器里打开 <code>english-coach</code> 文件夹，双击 <code>index.html</code>。';
+    } else if (!storageOK) {
+      box.innerHTML = '⚠️ <b>脚本正常，但浏览器禁止了本地存储</b>，学习进度无法保存。<br>' +
+        '解决：关掉无痕/隐私模式，或双击 <code>启动.cmd</code> 用本地服务器方式打开。';
+    } else {
+      box.innerHTML = '✅ <b>一切正常</b>，可以正常使用了。' +
+        (standalone
+          ? '你现在就是在这个 App 里操作。'
+          : '想装成手机/电脑上的独立应用，看下面「当前运行方式」那一行的提示。');
+      var a = document.createElement('a');
+      a.className = 'btn primary';
+      a.href = 'index.html';
+      a.textContent = '打开 index.html →';
+      box.appendChild(document.createElement('br'));
+      box.appendChild(a);
+    }
+  }
+
+  /* 环境信息 + 复制 */
+  var env = document.getElementById('env');
+  env.textContent =
+    '时间：' + new Date().toLocaleString() + '\n' +
+    '地址：' + location.href + '\n' +
+    '协议：' + location.protocol + '\n' +
+    '浏览器：' + navigator.userAgent + '\n' +
+    '语言：' + navigator.language + '\n' +
+    '窗口：' + window.innerWidth + ' x ' + window.innerHeight + '\n' +
+    '设备像素比：' + (window.devicePixelRatio || 1) + '\n' +
+    'localStorage：' + (storageOK ? '可用' : '不可用') + '\n' +
+    'speechSynthesis：' + (hasTTS ? '可用（英语音色 ' + voiceCount + '）' : '不可用');
+
+  document.getElementById('copy').addEventListener('click', function () {
+    var text = '=== 英语提分教练 诊断报告 ===\n' + report.join('\n') + '\n\n' + env.textContent;
+    var btn = this;
+    function ok(msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = '复制诊断报告'; }, 2000); }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { ok('已复制 ✓'); }, function () { fallback(); });
+    } else { fallback(); }
+    function fallback() {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); ok('已复制 ✓'); } catch (e) { ok('复制失败，请手动选中'); }
+      document.body.removeChild(ta);
+    }
+  });
+})();
+</script>
+</body>
+</html>

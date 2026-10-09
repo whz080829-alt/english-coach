@@ -1,0 +1,2 @@
+# 本项目零第三方依赖：只用 Python 标准库（http.server / sqlite3 / hashlib 等）。
+# 这个文件是为了让某些平台安心，内容故意留空。

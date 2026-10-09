@@ -1,0 +1,24 @@
+{
+  "name": "英语提分教练",
+  "short_name": "提分教练",
+  "description": "按你的程度定制的英语五档进阶学习：单词、语法、听力、阅读、写作，自适应排课 + 云同步。",
+  "lang": "zh-CN",
+  "start_url": "/index.html?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0e1116",
+  "theme_color": "#2f6cff",
+  "categories": ["education"],
+  "icons": [
+    { "src": "/assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/assets/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "今日计划", "url": "/index.html#/plan", "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }] },
+    { "name": "背单词", "url": "/index.html#/vocab", "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }] },
+    { "name": "我的账号", "url": "/index.html#/account", "icons": [{ "src": "/assets/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

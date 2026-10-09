@@ -1,0 +1,24 @@
+# Render 一键部署配置（https://render.com）
+#
+# 用法：把整个包推到 GitHub 仓库，然后在 Render 里 New → Blueprint，选这个仓库。
+#
+# ⚠️ 重要：SQLite 需要"持久磁盘"，而 Render 的免费档没有磁盘，
+#    容器一重启数据就没了。把这个包用于正式使用时，plan 要选 starter 或更高。
+#    只想先试试效果，可以删掉 disk 段并把 plan 改成 free（数据会丢，能接受再这么干）。
+
+services:
+  - type: web
+    name: english-coach
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: EC_DB
+        value: /data/coach.db
+      - key: HOST
+        value: 0.0.0.0
+    disk:
+      name: coach-data
+      mountPath: /data
+      sizeGB: 1

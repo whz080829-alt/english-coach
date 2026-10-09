@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>英语提分教练 · 高考 → A/B级 → 四六级 → 雅思</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2f6cff">
+<meta name="description" content="按你的程度定制的英语学习软件：单词、语法、听力、阅读、写作，五档进阶，手机电脑都能装。">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="提分教练">
+<link rel="icon" href="assets/favicon-32.png" type="image/png">
+<link rel="icon" href="assets/icon.ico" sizes="any">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<!-- 关键内联样式：即使外部 CSS 没加载成功，页面也不会出现"黑屏看不出内容"的情况 -->
+<style>
+  html, body { margin: 0; min-height: 100%; background: #0e1116; color: #e6ecf3;
+    font: 15px/1.7 -apple-system, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif; }
+  a { color: #4c8dff; }
+  code { background: #232a34; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
+  #boot-note { max-width: 780px; margin: 8vh auto; padding: 26px 30px; background: #161b22;
+    border: 1px solid #2c3542; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+  #boot-note h1 { font-size: 20px; margin: 0 0 14px; }
+  #boot-note p, #boot-note li { color: #b9c4d2; }
+  #boot-note ol { padding-left: 22px; }
+  #boot-note li { margin: 6px 0; }
+  #boot-err { color: #f87171 !important; white-space: pre-wrap; font-family: Consolas, monospace;
+    font-size: 12.5px; margin-top: 14px !important; }
+</style>
+<script>
+/* 最早注册全局错误捕获：任何脚本报错都要能显示出来，绝不静默黑屏 */
+window.__ecErrors = [];
+function __ecPush(msg) {
+  if (window.__ecErrors.indexOf(msg) < 0) window.__ecErrors.push(msg);
+  if (window.__ecShowError) window.__ecShowError();
+}
+window.addEventListener('error', function (e) {
+  if (e && e.target && e.target.tagName === 'SCRIPT') {
+    __ecPush('脚本加载失败：' + (e.target.getAttribute('src') || '(inline)'));
+    return;
+  }
+  __ecPush((e && e.message ? e.message : '未知脚本错误') +
+    (e && e.filename ? '  @ ' + String(e.filename).split('/').pop() + ':' + e.lineno : ''));
+}, true);
+window.addEventListener('unhandledrejection', function (e) {
+  __ecPush('Promise 未处理错误：' + ((e.reason && e.reason.message) || e.reason));
+});
+</script>
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body data-theme="dark">
+
+<!-- 加载提示：脚本正常执行后会被自动移除；若脚本没跑起来，这段说明会留在页面上 -->
+<div id="boot-note">
+  <h1>正在加载「英语提分教练」…</h1>
+  <p>如果这段文字停留超过 3 秒没消失，说明页面脚本没有正常执行 —— 这就是"黑屏"的原因。下面是排查步骤：</p>
+  <ol>
+    <li>确认用的是 <b>Chrome 或 Edge</b>，并且是<b>直接双击 <code>english-coach\index.html</code></b>，或者双击 <code>启动.cmd</code>。</li>
+    <li>打开 <a href="诊断.html">诊断.html</a> —— 它会逐项检查脚本、存储、语音，并直接告诉你哪一步失败。</li>
+    <li>如果你是在聊天窗口里点"预览"打开的，请改用上面的方式：预览沙箱会拦截本地脚本。</li>
+  </ol>
+  <p id="boot-err"></p>
+</div>
+
+<div id="data-banner" class="data-banner"></div>
+
+<div class="app" id="app-root" style="display:none">
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="logo">🎓</span>
+      <div class="brand-text">
+        <b>英语提分教练</b>
+        <span class="hint">高考 → A/B级 → 四级 → 六级 → 雅思</span>
+      </div>
+    </div>
+    <nav id="nav" class="nav"></nav>
+    <div id="route-map" class="route-map"></div>
+    <div class="sidebar-foot hint">数据只存在本机浏览器<br>记得定期在「设置」里导出备份</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <h1 id="top-title">今日计划</h1>
+      <div class="top-meta" id="top-meta"></div>
+    </header>
+    <div id="view" class="view"><div class="empty">正在准备学习内容…</div></div>
+  </main>
+</div>
+
+<div id="toast-wrap" class="toast-wrap"></div>
+<div id="modal-wrap"></div>
+
+<noscript>
+  <div style="max-width:760px;margin:10vh auto;padding:24px;background:#161b22;border:1px solid #2c3542;border-radius:14px">
+    <h1 style="font-size:20px">需要开启 JavaScript</h1>
+    <p>本软件完全依赖浏览器脚本运行。请在浏览器设置里允许此页面运行 JavaScript，然后刷新。</p>
+  </div>
+</noscript>
+
+<script src="assets/js/core/parse.js"></script>
+<script src="assets/js/core/store.js"></script>
+<script src="assets/js/core/tts.js"></script>
+<script src="assets/js/core/api.js"></script>
+<script src="assets/js/core/cloud.js"></script>
+<script src="assets/js/core/install.js"></script>
+
+<script src="assets/js/data/vocab.basic.js"></script>
+<script src="assets/js/data/vocab.cet.js"></script>
+<script src="assets/js/data/vocab.js"></script>
+<script src="assets/js/data/grammar.js"></script>
+<script src="assets/js/data/listening.js"></script>
+<script src="assets/js/data/reading.js"></script>
+<script src="assets/js/data/writing.js"></script>
+
+<script src="assets/js/core/engine.js"></script>
+<script src="assets/js/core/writegrade.js"></script>
+
+<script src="assets/js/ui/ui.js"></script>
+<script src="assets/js/ui/view-onboarding.js"></script>
+<script src="assets/js/ui/view-plan.js"></script>
+<script src="assets/js/ui/view-placement.js"></script>
+<script src="assets/js/ui/view-vocab.js"></script>
+<script src="assets/js/ui/view-grammar.js"></script>
+<script src="assets/js/ui/view-listening.js"></script>
+<script src="assets/js/ui/view-reading.js"></script>
+<script src="assets/js/ui/view-writing.js"></script>
+<script src="assets/js/ui/view-stats.js"></script>
+<script src="assets/js/ui/view-settings.js"></script>
+<script src="assets/js/ui/view-summary.js"></script>
+<script src="assets/js/ui/view-account.js"></script>
+<script src="assets/js/ui/view-social.js"></script>
+
+<script src="assets/js/app.js"></script>
+<script>
+(function () {
+  var REQUIRED = ['ECParse', 'ECStore', 'ECTTS', 'EC_VOCAB', 'EC_GRAMMAR', 'EC_LISTENING',
+    'EC_DICTATION', 'EC_READING', 'EC_WRITING', 'ECEngine', 'ECWriteGrade', 'ECUI', 'ECViews', 'ECApp',
+    'ECApi', 'ECCloud'];
+
+  function showError(extra) {
+    var box = document.getElementById('boot-err');
+    if (!box) return;
+    var lines = (window.__ecErrors || []).slice(0, 12);
+    if (extra) lines.unshift(extra);
+    if (!lines.length) lines.push('未知原因：脚本已加载但界面没有渲染出来。');
+    box.textContent = lines.join('\n') + '\n\n浏览器：' + navigator.userAgent;
+  }
+  window.__ecShowError = function () { showError(); };
+
+  function boot() {
+    var missing = REQUIRED.filter(function (n) { return typeof window[n] === 'undefined'; });
+    if (missing.length) {
+      showError('这些脚本没有加载成功：' + missing.join('、') +
+        '\n（如果是通过聊天窗口的"预览"打开的，请改为双击 index.html 或 启动.cmd）');
+      return;
+    }
+    try {
+      ECApp.start();
+    } catch (e) {
+      showError('启动出错：' + (e && e.message) +
+        (e && e.stack ? '\n' + String(e.stack).split('\n').slice(1, 4).join('\n') : ''));
+      return;
+    }
+    var note = document.getElementById('boot-note');
+    if (note && note.parentNode) note.parentNode.removeChild(note);
+    document.getElementById('app-root').style.display = 'flex';
+    var v = document.getElementById('view');
+    if (v && /正在准备学习内容/.test(v.innerHTML)) v.innerHTML = '';
+    if (window.__ecErrors.length && window.ECUI) {
+      ECUI.toast('页面有 ' + window.__ecErrors.length + ' 条脚本提示，可打开「诊断.html」查看', 'bad', 6000);
+    }
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  // PWA：注册 Service Worker（file:// 打开的本机模式不注册，不影响离线使用）
+  if ('serviceWorker' in navigator &&
+      (location.protocol === 'https:' || location.hostname === '127.0.0.1' ||
+       location.hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(location.hostname))) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () { });
+    });
+  }
+})();
+</script>
+</body>
+</html>
