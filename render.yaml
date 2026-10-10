@@ -1,24 +1,28 @@
 # Render 一键部署配置（https://render.com）
 #
-# 用法：把整个包推到 GitHub 仓库，然后在 Render 里 New → Blueprint，选这个仓库。
+# 当前为「免费体验」配置：plan free，无持久磁盘。
+# 服务 15 分钟无人访问会休眠（下次打开冷启动约 30-60 秒），
+# 容器重新部署/重启后 SQLite 数据会清空（账号、进度）。
 #
-# ⚠️ 重要：SQLite 需要"持久磁盘"，而 Render 的免费档没有磁盘，
-#    容器一重启数据就没了。把这个包用于正式使用时，plan 要选 starter 或更高。
-#    只想先试试效果，可以删掉 disk 段并把 plan 改成 free（数据会丢，能接受再这么干）。
+# 长期正式使用：把 plan 改成 starter，并恢复下面注释的 disk 段（约 $7/月）。
+#
+# services 示例（starter 持久版）：
+#    plan: starter
+#    disk:
+#      name: coach-data
+#      mountPath: /data
+#      sizeGB: 1
 
 services:
   - type: web
     name: english-coach
     runtime: docker
     dockerfilePath: ./Dockerfile
-    plan: starter
+    plan: free
     healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: EC_DB
         value: /data/coach.db
       - key: HOST
         value: 0.0.0.0
-    disk:
-      name: coach-data
-      mountPath: /data
-      sizeGB: 1
